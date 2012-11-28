@@ -9,6 +9,9 @@ author: Eugene Burtsev
 simple_search: http://google.com/search
 description:
 
+# Multilanguage configuration
+languages: [en, ru]
+default_language: ru
 # Default date format is "ordinal" (resulting in "July 22nd 2007")
 # You can customize the format as defined in
 # http://www.ruby-doc.org/core-1.9.2/Time.html#method-i-strftime
