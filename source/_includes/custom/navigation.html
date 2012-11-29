@@ -1,4 +1,4 @@
 <ul class="main-navigation">
-  <li><a href="{{ root_url }}/">Blog</a></li>
-  <li><a href="{{ root_url }}/archives">Archives</a></li>
+  <li><a href="{{ root_url }}/{%if page.language && page.language != site.default_language %}{{ page.language }}{% endif %}">Blog</a></li>
+  <li><a href="{{ root_url }}/{%if page.language && page.language != site.default_language %}{{ page.language }}/{% endif %}archives">Archives</a></li>
 </ul>
