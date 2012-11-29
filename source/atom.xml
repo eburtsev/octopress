@@ -1,0 +1,4 @@
+---
+layout: nil
+---
+{% assign accepted_language = site.default_language %}{% assign posts = paginator.posts %}{% include atom.xml %}
