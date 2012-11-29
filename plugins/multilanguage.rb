@@ -43,5 +43,40 @@ module Jekyll
 			self.data.deep_merge({ 'page_language' => @page_language });
 		end
 	end
+
+	module Filters
+		def append_lng_to_url(url, language)
+			if url.start_with?('/')
+				url = "/#{language}#{url}"
+			else
+				url = "#{language}/#{url}"
+			end
+			return url
+		end
+
+		def page_url_lng(url, current_language, language)
+			default_language = @context.registers[:site].config['default_language'] || 'en'
+			if current_language == default_language && current_language != language
+				return append_lng_to_url(url, language)
+			else
+				lang_replacement = ""
+				if language != default_language
+					lang_replacement = language
+				end
+				if url.start_with?('/')
+					if lang_replacement != ""
+						lang_replacement = "/#{lang_replacement}"
+					end
+					url = url.gsub("/#{current_language}", "#{lang_replacement}")
+				else
+					if lang_replacement != ""
+						lang_replacement = "/#{lang_replacement}"
+					end
+					url = url.gsub("#{current_language}", "#{lang_replacement}")
+				end
+				return url
+			end
+		end
+	end
 end
 

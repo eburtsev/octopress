@@ -1,0 +1,8 @@
+<section>
+  <h1>Language</h1>
+  <div class="languages">
+  {% for lng in site.languages %}
+    <a class="language-link" href="{{ page.url | page_url_lng: page.language, lng }}">{{lng}}</a>
+  {% endfor %}
+  </div>
+</section>
