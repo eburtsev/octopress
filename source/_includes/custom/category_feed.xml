@@ -5,8 +5,8 @@ layout: nil
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[{{ page.title }} | {{ site.title }}]]></title>
-  <link href="{{ site.url }}/{{ page.feed_url }}" rel="self"/>
-  <link href="{{ site.url }}/"/>
+  <link href="{{ site.url }}/{% if page.language != site.default_language %}{{ page.language }}/{% endif %}{{ page.feed_url }}" rel="self"/>
+  <link href="{{ site.url }}/{% if page.language != site.default_language %}{{ page.language }}{% endif %}"/>
   <updated>{{ site.time | date_to_xmlschema }}</updated>
   <id>{{ site.url }}/</id>
   <author>
@@ -16,6 +16,7 @@ layout: nil
   <generator uri="http://octopress.org/">Octopress</generator>
 
   {% for post in site.categories[page.category] limit: 5 %}
+  {% if post.language == accepted_language %}
   <entry>
     <title type="html"><![CDATA[{{ post.title | cdata_escape }}]]></title>
     <link href="{{ site.url }}{{ post.url }}"/>
@@ -23,5 +24,6 @@ layout: nil
     <id>{{ site.url }}{{ post.id }}</id>
     <content type="html"><![CDATA[{{ post.content | expand_urls: site.url | markdownify | cdata_escape }}]]></content>
   </entry>
+  {% endif %}
   {% endfor %}
 </feed>

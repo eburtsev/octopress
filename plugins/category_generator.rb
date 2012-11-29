@@ -29,11 +29,18 @@ module Jekyll
     #  +base+         is the String path to the <source>.
     #  +category_dir+ is the String path between <source> and the category folder.
     #  +category+     is the category currently being processed.
-    def initialize(site, base, category_dir, category)
+    def initialize(site, base, category_dir, category, lang)
       @site = site
       @base = base
       @dir  = category_dir
+      @page_language = lang
       @name = 'index.html'
+
+      default_language = self.site.config['default_language'] || 'en'
+      if @page_language != default_language
+        @dir = "/#{@page_language}#{@dir}"
+      end
+
       self.process(@name)
       # Read the YAML data from the layout page.
       self.read_yaml(File.join(base, '_layouts'), 'category_index.html')
@@ -44,6 +51,9 @@ module Jekyll
       # Set the meta-description for this page.
       meta_description_prefix  = site.config['category_meta_description_prefix'] || 'Category: '
       self.data['description'] = "#{meta_description_prefix}#{category}"
+
+      self.data['language'] = @page_language
+      self.data.deep_merge({ 'page_language' => @page_language });
     end
 
   end
@@ -56,11 +66,18 @@ module Jekyll
     #  +base+         is the String path to the <source>.
     #  +category_dir+ is the String path between <source> and the category folder.
     #  +category+     is the category currently being processed.
-    def initialize(site, base, category_dir, category)
+    def initialize(site, base, category_dir, category, lang)
       @site = site
       @base = base
       @dir  = category_dir
+      @page_language = lang
       @name = 'atom.xml'
+
+      default_language = self.site.config['default_language'] || 'en'
+      if @page_language != default_language
+        @dir = "/#{@page_language}#{@dir}"
+      end
+
       self.process(@name)
       # Read the YAML data from the layout page.
       self.read_yaml(File.join(base, '_includes/custom'), 'category_feed.xml')
@@ -74,6 +91,9 @@ module Jekyll
 
       # Set the correct feed URL.
       self.data['feed_url'] = "#{category_dir}/#{name}"
+
+      self.data['language'] = @page_language
+      self.data.deep_merge({ 'page_language' => @page_language });
     end
 
   end
@@ -87,14 +107,20 @@ module Jekyll
     #  +category_dir+ is the String path to the category folder.
     #  +category+     is the category currently being processed.
     def write_category_index(category_dir, category)
-      index = CategoryIndex.new(self, self.source, category_dir, category)
+      for lang in config['languages']
+        write_category_index_ml(category_dir, category, lang)
+      end
+    end
+
+    def write_category_index_ml(category_dir, category, lang)
+      index = CategoryIndex.new(self, self.source, category_dir, category, lang)
       index.render(self.layouts, site_payload)
       index.write(self.dest)
       # Record the fact that this page has been added, otherwise Site::cleanup will remove it.
       self.pages << index
 
       # Create an Atom-feed for each index.
-      feed = CategoryFeed.new(self, self.source, category_dir, category)
+      feed = CategoryFeed.new(self, self.source, category_dir, category, lang)
       feed.render(self.layouts, site_payload)
       feed.write(self.dest)
       # Record the fact that this page has been added, otherwise Site::cleanup will remove it.
@@ -140,10 +166,18 @@ module Jekyll
     #
     # Returns string
     #
-    def category_links(categories)
+    def category_links(post)
+      categories = post['categories']
+      lang = post['language']
       dir = @context.registers[:site].config['category_dir']
+
+      default_language = @context.registers[:site].config['default_language'] || 'en'
+      if lang != default_language
+        dir = "/#{lang}#{dir}"
+      end
+
       categories = categories.sort!.map do |item|
-        "<a class='category' href='/#{dir}/#{item.gsub(/_|\P{Word}/, '-').gsub(/-{2,}/, '-').downcase}/'>#{item}</a>"
+        "<a class='category' href='#{dir}/#{item.gsub(/_|\P{Word}/, '-').gsub(/-{2,}/, '-').downcase}/'>#{item}</a>"
       end
 
       case categories.length

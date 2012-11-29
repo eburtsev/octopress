@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[{{ site.title }}]]></title>
-  <link href="{{ site.url }}/{%if page.language && page.language != site.default_language %}{{ page.language }}/{% endif %}atom.xml" rel="self"/>
-  <link href="{{ site.url }}/{%if page.language && page.language != site.default_language %}{{ page.language }}/{% endif %}"/>
+  <link href="{{ site.url }}/{% if page.language != site.default_language %}{{ page.language }}/{% endif %}atom.xml" rel="self"/>
+  <link href="{{ site.url }}/{% if page.language != site.default_language %}{{ page.language }}{% endif %}"/>
   <updated>{{ site.time | date_to_xmlschema }}</updated>
-  <id>{{ site.url }}/{%if page.language && page.language != site.default_language %}{{ page.language }}/{% endif %}</id>
+  <id>{{ site.url }}/{% if page.language != site.default_language %}{{ page.language }}{% endif %}</id>
   <author>
     <name><![CDATA[{{ site.author | strip_html }}]]></name>
     {% if site.email %}<email><![CDATA[{{ site.email }}]]></email>{% endif %}
