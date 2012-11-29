@@ -56,6 +56,9 @@ module Jekyll
 
 		def page_url_lng(url, current_language, language)
 			default_language = @context.registers[:site].config['default_language'] || 'en'
+			if url.end_with?('/index.html')
+				url = url.gsub("/index.html", "/")
+			end
 			if current_language == default_language && current_language != language
 				return append_lng_to_url(url, language)
 			else
