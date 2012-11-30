@@ -1,0 +1,57 @@
+---
+layout: post
+title: "Обход исключения org.apache.ibatis.transaction. TransactionException в iBATIS при временной недоступности сервера баз данных"
+date: 2012-01-12 14:10
+comments: true
+categories: [ibatis, java, jdbc]
+---
+Иногда происходит неприятная ситуация когда сервер баз данных уходит в ребут. 
+В этом случае можно поймать неприятное исключение такого вида:
+
+``` text
+Caused by: org.apache.ibatis.exceptions.PersistenceException: 
+### Error opening session.  Cause: org.apache.ibatis.transaction.TransactionException: Error configuring AutoCommit.  Your driver may not support getAutoCommit() or setAutoCommit(). Requested setting: false.  Cause: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: The last packet successfully received from the server was 59,121,876 milliseconds ago.  The last packet sent successfully to the server was 59,121,984 milliseconds ago. is longer than the server configured value of 'wait_timeout'. You should consider either expiring and/or testing connection validity before use in your application, increasing the server configured values for client timeouts, or using the Connector/J connection property 'autoReconnect=true' to avoid this problem.
+### Cause: org.apache.ibatis.transaction.TransactionException: Error configuring AutoCommit.  Your driver may not support getAutoCommit() or setAutoCommit(). Requested setting: false.  Cause: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: The last packet successfully received from the server was 59,121,876 milliseconds ago.  The last packet sent successfully to the server was 59,121,984 milliseconds ago. is longer than the server configured value of 'wait_timeout'. You should consider either expiring and/or testing connection validity before use in your application, increasing the server configured values for client timeouts, or using the Connector/J connection property 'autoReconnect=true' to avoid this problem.
+        at org.apache.ibatis.exceptions.ExceptionFactory.wrapException(ExceptionFactory.java:8)
+        at org.apache.ibatis.session.defaults.DefaultSqlSessionFactory.openSessionFromDataSource(DefaultSqlSessionFactory.java:83)
+        at org.apache.ibatis.session.defaults.DefaultSqlSessionFactory.openSession(DefaultSqlSessionFactory.java:32)
+        at com.greytower.htmltemplates.core.dao.ibatis.TemplatesDAOImpl.readAll(TemplatesDAOImpl.java:70)
+        at com.greytower.htmltemplates.beans.TemplatesEditorBean.init(TemplatesEditorBean.java:86)
+        ... 59 more
+Caused by: org.apache.ibatis.transaction.TransactionException: Error configuring AutoCommit.  Your driver may not support getAutoCommit() or setAutoCommit(). Requested setting: false.  Cause: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: The last packet successfully received from the server was 59,121,876 milliseconds ago.  The last packet sent successfully to the server was 59,121,984 milliseconds ago. is longer than the server configured value of 'wait_timeout'. You should consider either expiring and/or testing connection validity before use in your application, increasing the server configured values for client timeouts, or using the Connector/J connection property 'autoReconnect=true' to avoid this problem.
+        at org.apache.ibatis.transaction.jdbc.JdbcTransaction.setDesiredAutoCommit(JdbcTransaction.java:51)
+        at org.apache.ibatis.transaction.jdbc.JdbcTransaction.<init>(JdbcTransaction.java:19)
+        at org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory.newTransaction(JdbcTransactionFactory.java:15)
+        at org.apache.ibatis.session.defaults.DefaultSqlSessionFactory.openSessionFromDataSource(DefaultSqlSessionFactory.java:78)
+        ... 62 more
+Caused by: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: The last packet successfully received from the server was 59,121,876 milliseconds ago.  The last packet sent successfully to the server was 59,121,984 milliseconds ago. is longer than the server configured value of 'wait_timeout'. You should consider either expiring and/or testing connection validity before use in your application, increasing the server configured values for client timeouts, or using the Connector/J connection property 'autoReconnect=true' to avoid this problem.
+```
+<!--more-->
+
+Для решения этой проблемы нужно установить свойства poolPingQuery и poolPingEnabled в конфиге iBatis. Например, как это сделано в примере ниже в строках 17 и 18.
+``` xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	<typeAliases>
+		...
+	</typeAliases>
+
+	<environments default="development">
+		<environment id="development">
+			<transactionManager type="JDBC" />
+			<dataSource type="POOLED">
+				<property name="driver" value="${db.driver}" />
+				<property name="url" value="${db.url}" />
+				<property name="username" value="${db.user}" />
+				<property name="password" value="${db.password}" />
+				<property name="poolPingQuery" value="SELECT id FROM user WHERE id = 1" />
+				<property name="poolPingEnabled" value="true" />
+			</dataSource>
+		</environment>
+	</environments>
+
+</configuration>
+```
+
