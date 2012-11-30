@@ -1,0 +1,55 @@
+---
+layout: post
+title: "PrimeFaces tips & tricks"
+date: 2011-10-02 13:00
+comments: true
+categories: [java, jsf, jsf-2.0, primefaces]
+---
+В данном посте я постараюсь описать решения типичных проблем возникающих при работе с прекрасной библиотекой JSF компонентов [PrimeFaces](http://primefaces.org)
+<!--more-->
+## Размер компонентов
+Наверное каждый кто начинал пользоваться библиотекой задавался вопросом "Почему компоненты выглядят такими огромными, хотя в демо они смотрятся гораздо приличнее?". Для решения этой проблемы достаточно добавить внутри тега ```<h:head></h:head>``` следующий CSS код:
+``` css
+.ui-widget {
+	font-size: 75% !important;
+}
+.ui-widget .ui-widget {
+	font-size: 100% !important;
+}
+```
+
+## PrimeFaces и Internet Explorer
+При использовании данной библиотеки в IE могут возникать проблемы с рендерингом, для избавления от которых рекомендуется устанавливать заголовок X-UA-Compatible. В старых версиях библиотеки (до 3.0) это делалось установкой тега meta в начале ```<h:head></h:head>```. Однако начиная с версии 3.0 библиотека сначала вставляет свой код в тег head, а уже следом за ним пользовательский. Для того что бы обойти эту проблему в третьей версии был определен facet "first", содержимое которого вставляется в самое начало тега head:
+``` xml
+<h:head>
+	<f:facet name="first">
+		<meta http-equiv="X-UA-Compatible" content="EmulateIE8" />
+		<meta http-equiv="Content-Type" content="text/xhtml; charset=UTF-8" />
+		<meta http-equiv="Cache-Control" content="no-cache" />
+		<meta http-equiv="Pragma" content="no-cache" />
+		<title><ui:insert name="title">Application Title</ui:insert></title>
+	</f:facet>
+</h:head>
+```
+
+## Вертикальные табы в p:tabView
+Поскольку компоненты библиотеки основаны на jQueryUI, то для создания вертикальных табов можно использовать решение из [этого демо](http://jquery-ui.googlecode.com/svn/trunk/demos/tabs/vertical.html). Во первых необходимо добавить CSS код:
+``` css
+/* Vertical Tabs
+----------------------------------*/
+.ui-tabs-vertical { width: 55em; }
+.ui-tabs-vertical .ui-tabs-nav { padding: .2em .1em .2em .2em; float: left; width: 12em; }
+.ui-tabs-vertical .ui-tabs-nav li { clear: left; width: 100%; border-bottom-width: 1px !important; border-right-width: 0 !important; margin: 0 -1px .2em 0; }
+.ui-tabs-vertical .ui-tabs-nav li a { display:block; }
+.ui-tabs-vertical .ui-tabs-nav li.ui-tabs-selected { padding-bottom: 0; padding-right: .1em; border-right-width: 1px; border-right-width: 1px; }
+.ui-tabs-vertical .ui-tabs-panel { padding: 1em; float: right; width: 40em;}
+```
+А во вторых подключить класс к нужному tabView
+``` xml
+<p:tabView styleClass="ui-tabs-vertical" />
+```
+Данное решение было найдено по мотивам данных вопросов на [StackOverflow](http://stackowerflow.com):
+*	[Make tabs appear vertically on the side when using PrimeFaces TabView](http://stackoverflow.com/q/6098319/600313)
+*	[Vertical Tabs with JQuery?](http://stackoverflow.com/q/773074/600313)
+
+Пока что это все :) При появлении еще каких нибудь заметок, обязуюсь выложить их на всеобщее обозрение.
