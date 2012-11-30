@@ -1,0 +1,157 @@
+---
+layout: post
+title: "Installation of Mercurial + UWSGI + Nginx + HTTPS on Ubuntu Server 10.04"
+date: 2011-08-03 20:28
+comments: true
+categories: [ubuntu, mercurial, uwsgi, nginx]
+---
+
+Some times ago I installed Mercurial server, using as a frontend nginx. Internet has a lot of information about this, but I had to improvise a lot that would achieve a result. So, here is the result of my work.
+<!--more-->
+All commands in this guide you need to run with root rights. Let's go :)
+## Install required software
+### Python
+Install Python first time.
+	apt-get install python
+Install python-software-properties - this is best way for adding PPA :)
+	apt-get install python-software-properties
+After installing it you can add PPA by following command. It's really simple.
+	add-apt-repository ppa:xxx/yyy
+
+### Mercurial
+In Lucid Lynx repository mercurial present, but it's version is too old, so install third-party PPA with newest versions of mercurial:
+	add-apt-repository ppa:mercurial-ppa/stable-snapshots
+	apt-get update
+	apt-get install mercurial
+
+### Nginx
+Install nginx from third-party PPA.
+	add-apt-repository ppa:nginx/stable
+	apt-get update
+	apt-get install nginx
+
+### uwsgi-python
+Install uwsgi-python as python application server.
+	add-apt-repository ppa:uwsgi/release
+	apt-get update
+	apt-get install uwsgi-python
+
+## Configuration
+After software installation go to the next step - configuration.
+First, review directories structure used in this guide.
+	/var/www/hosts/hg.server.net/conf    здесь будут расположены конфиги
+	/var/www/hosts/hg.server.net/logs    директория для логов
+	/var/www/hosts/hg.server.net/repos   директория, содержащая репозитории
+
+### Mercurial + uwsgi
+Create UWSGI-application ```/etc/uwsgi-python/apps-available/hgweb.xml```:
+	<uwsgi>
+		<socket>/var/run/uwsgi.hgweb.sock</socket>
+		<master/>
+		<workers>2</workers>
+	<![CDATA[
+	import uwsgi
+	import os
+
+	os.environ["HGENCODING"] = "UTF-8"
+
+	from mercurial import demandimport; demandimport.enable()
+	from mercurial.hgweb.hgwebdir_mod import hgwebdir
+
+	application = hgwebdir('/var/www/hosts/hg.server.net/conf/hgweb.config')
+	]]>
+	</uwsgi>
+
+Note that in 14-th line you need change path to hgweb config, which we create now.
+
+Create file ```/var/www/hosts/hg.server.net/conf/hgweb.config```:
+	[web]
+	push_ssl = true
+	allow_push = *
+	style = gitweb
+	allow_archive = gz, zip, bz2
+
+	[collections]
+	/var/www/hosts/hg.server.net/repos/ = /var/www/hosts/hg.server.net/repos/
+
+In last line you need change patchs to repositories dir.
+Now we can check how works uwsgi server. For test change line ```<socket>/var/run/uwsgi.hgweb.sock</socket>``` in hgweb.xml file to ```<socket>127.0.0.1:3031</socket>``` and run:
+	uwsgi-python -x /etc/uwsgi-python/apps-available/hgweb.xml
+
+If all is OK you can go to ```http://127.0.0.1:3031/``` and see repositories list. If it's true, revert hgweb.xml and make symlink to ```/etc/uwsgi-python/apps-enabled```:
+	ln -s /etc/uwsgi-python/apps-{available,enabled}/hgweb.xml
+
+Now we can go to next step.
+
+### Nginx
+Create auth file with htpasswd utility
+	htpasswd -c /var/www/auth/.htpasswd <username>
+
+Create nginx config /etc/nginx/sites-available/hg.server.net
+	server {
+		listen               443;
+		listen               80;
+		server_name          hg.server.net;
+
+		ssl                  on;
+		ssl_protocols        SSLv3 TLSv1;
+		ssl_certificate      /var/www/hosts/hg.server.net/ssl/ssl_certificate.crt;
+		ssl_certificate_key  /var/www/hosts/hg.server.net/ssl/ssl_certificate.key;
+
+		root                 /var/www/hosts/hg.server.net/www;
+		access_log           /var/www/hosts/hg.server.net/logs/access.log;
+		error_log            /var/www/hosts/hg.server.net/logs/error.log;
+
+		# Need for very big files
+		client_max_body_size 100m;
+
+		if ( $scheme = "http" ) {
+			rewrite ^/(.*)$  https://$host/$1 permanent;
+		}
+
+		location / {
+			auth_basic                  "Mercurial Repository";
+			auth_basic_user_file        /var/www/auth/.htpasswd;
+			include     uwsgi_params;
+			uwsgi_param REMOTE_PORT     $remote_port;
+			uwsgi_param SERVER_PORT     $server_port;
+			uwsgi_param SERVER_PROTOCOL $server_protocol;
+			uwsgi_param UWSGI_SCHEME    $scheme;
+			uwsgi_param SCRIPT_NAME     /;
+			uwsgi_param AUTH_USER       $remote_user;
+			uwsgi_param REMOTE_USER     $remote_user;
+			uwsgi_pass  hgweb;
+		}
+
+		location /static/ {
+			rewrite       /static/(.*)  /$1 break;
+			root          /usr/share/mercurial/templates/static;
+			expires 30d;
+		}
+
+		location ~ /\. {
+			deny all;
+		}
+	}
+
+	upstream hgweb {
+		server unix:/var/run/uwsgi.hgweb.sock;
+	}
+
+Make symlink for config in ```/etc/nginx/sites-enabled``` directory:
+	ln -s /etc/nginx/sites-{available,enabled}/hg.server.net
+
+Start services:
+	service uwsgi-python start
+	service nginx start
+
+Try open ```http://hg.server.net/``` in browser. All is OK if you see list of repositories. If you get an error - check settings.
+Next we can add all services to autorun.
+
+### Auto start services at boot
+First, make symlinks to configs as I write in examples below.
+Then configure required services for auto start at boot:
+	update-rc.d uwsgi-python defaults
+	update-rc.d nginx defaults
+
+That's it. You can reboot and check how it works.
