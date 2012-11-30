@@ -1,0 +1,52 @@
+---
+layout: post
+title: "Google gdata maven repository"
+date: 2012-01-29 20:24
+comments: true
+categories: [gdata, java, maven]
+---
+Недавно пришлось столкнуться с тем что для гугловской библиотеки [gdata](http://code.google.com/p/gdata-java-client/) отсутствуют maven-репозитории. Конечно есть новая библиотека [google-api-java-client](http://code.google.com/p/google-api-java-client/), но в ней реализованы не все API, например недостает Provisioning API для доменов.
+
+В поиске было найдено несколько репозиториев, но во всех из них лежат только старые версии библиотеки.
+
+Так же был найден замечательный [скрипт](https://github.com/dcarter/Google-Data-APIs-Mavenized/network) для создания локального maven-репозитория.
+
+Поскольку не у всех есть время и возможность создать свой репозиторий (под Windows например у меня этот скрипт запустить так и не получилось), то я решил выложить результаты работы у себя на сервере - вдруг кому-то и сгодится.
+
+Подробности под катом
+<!--more-->
+Как пользоваться:  
+Во-первых подключить репозиторий в вашем ```pom.xml```, например как в примере ниже:
+``` xml pom.xml
+<repositories>
+	<repository>
+		<id>burtsev-net-maven</id>
+		<name>Burtsev.Net Maven Repository</name>
+		<url>http://maven.burtsev.net</url>
+	</repository>
+</repositories>
+```  
+Или можно воспользоваться зеркалом на github'e:
+``` xml pom.xml
+<repositories>
+	<repository>
+		<id>gdata-maven-github</id>
+		<name>Google Gdata Maven Repository</name>
+		<url>https://raw.github.com/eburtsev/gdata-maven/master/</url>
+	</repository>
+</repositories>
+```  
+И во-вторых подключить необходимые зависимости. Например подключим Calendar API версии 2.0:
+``` xml pom.xml
+<dependency>
+	<groupId>com.google.gdata.gdata-java-client</groupId>
+	<artifactId>gdata-calendar-2.0</artifactId>
+	<version>1.46.0</version>
+</dependency>
+```  
+Собственно все :) Надеюсь кому то это пригодится :)
+
+P.S. Модифицированную версию скрипта можно взять [здесь](https://github.com/eburtsev/Google-Data-APIs-Mavenized)
+
+**Upd. 2012-04-24:** Репозиторий обновлен, добавлены библиотеки версии v1.47.0  
+**Upd. 2012-08-14:** Репозиторий обновлен, добавлены библиотеки версии v1.47.1

@@ -1,0 +1,52 @@
+---
+layout: post
+title: "Google gdata maven repository"
+date: 2012-01-29 20:24
+comments: true
+categories: [gdata, java, maven]
+---
+Some time ago, I was searching for [google gdata](http://code.google.com/p/gdata-java-client/) maven repository, but I was surprised - it has no any maven repositories! Of course, there are a new [google-api-java-client](http://code.google.com/p/google-api-java-client/), , but it do not implements all google API's, for example it don't implement Provisioning API for domains.
+
+I found some repositories with older versions of library.
+
+Also I found awesome [script](https://github.com/dcarter/Google-Data-APIs-Mavenized/network) which helps to create local maven repo for Google's gdata library.
+
+I used modified version of this script to create my own repository hosted on my server. I'll happy if it will be helpfull for someone.
+
+Details under the cut
+<!--more-->
+How to use:  
+First connect the repository to your ```pom.xml```, such as in the example below:
+``` xml pom.xml
+<repositories>
+	<repository>
+		<id>burtsev-net-maven</id>
+		<name>Burtsev.Net Maven Repository</name>
+		<url>http://maven.burtsev.net</url>
+	</repository>
+</repositories>
+```  
+Also you can use mirror on github:
+``` xml pom.xml
+<repositories>
+	<repository>
+		<id>gdata-maven-github</id>
+		<name>Google Gdata Maven Repository</name>
+		<url>https://raw.github.com/eburtsev/gdata-maven/master/</url>
+	</repository>
+</repositories>
+```  
+And secondly use the dependencies. For example using of Calendar API v2.0:
+``` xml pom.xml
+<dependency>
+	<groupId>com.google.gdata.gdata-java-client</groupId>
+	<artifactId>gdata-calendar-2.0</artifactId>
+	<version>1.46.0</version>
+</dependency>
+```  
+That's it:) I hope it is useful to someone:)
+
+P.S. Modified script you can get [here](https://github.com/eburtsev/Google-Data-APIs-Mavenized)
+
+**Upd. 2012-04-24:** Repository has been updated, added gdata libraries v1.47.0  
+**Upd. 2012-08-14:** Repository has been updated, added gdata libraries v1.47.1
