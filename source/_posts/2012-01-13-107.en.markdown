@@ -1,0 +1,25 @@
+---
+layout: post
+title: "Java 7 try-with-resources and MyBatis"
+date: 2012-01-13 10:41
+comments: true
+categories: [ibatis, java, java7]
+---
+With Java 7 came analog of using construction from C# - [try-with-resources](http://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html). This feature is very well for automatically close resources such as database connections, etc.
+For example:
+{% gist 1638790 %}
+
+But there are an trouble - class org.apache.ibatis.session.SqlSession from MyBatis 3.0.6 does not implement AutoCloseable interface which is required to work try-with-resources construction. I hope that in next version it will be fixed, but now I can offer small workaround.
+<!--more-->
+
+The first implement a wrapper for SqlSession class implements the interface AutoCloseable:
+{% gist 1638811 %}
+
+Also we need write wrapper for SqlSessionFactory class which can work with our custom SqlSession:
+{% gist 1638826 %}
+
+Below I provide iBatis initialization code. It looks as usual, except the line 18, where we initialize our wrapper.
+{% gist 1638837 %}
+
+That's all - now we can now enjoy java7 features in our project:)
+
