@@ -1,0 +1,42 @@
+---
+layout: post
+title: "JSF2 + Spring Framework Example"
+date: 2012-05-30 21:19
+comments: true
+categories: [java, jsf, jsf-2.0, spring]
+---
+
+Just recently I've discovered the Spring Framework. IMHO it is amazing framework. And I decided to rewrite a couple of my applications using Spring. Below I tell how to integrate Spring and JSF2
+<!--more-->
+
+## Dependencies
+
+The first step is to add the org.springframework:spring-web artifact as project dependency:
+{% gist 2837401 %}
+
+## Setup
+
+To make it work you must configure listeners in web.xml, as shown in the following example: {% gist 2837439 %}
+
+It is also necessary to set custom el-resolver from Spring instead of the standard to allow Spring manage beans. Change faces-config.xml as in following piece of code: {% gist 2837426 %}
+
+Now configure spring-context.xml. You just need  to set base-package property for context:component-scan: {% gist 2837471 %}
+
+## Code
+
+Now, after we make all necessary settings, we can write some code:
+### index.xhtml
+{% gist 2837452 %}
+
+### TestBean.java
+
+here we using @Controller annotation instead of JSF @ManagedBean and @Scope to set bean scope. List of all possible scopes you can see here: [Spring Framework Reference](http://static.springsource.org/spring/docs/3.1.x/spring-framework-reference/html/beans.html#beans-factory-scopes). Also in spring I not found view scope. But I found solution [here](http://comdynamics.net/blog/109/spring3-jsf2-view-scope/) and [here](http://cagataycivici.wordpress.com/2010/02/17/port-jsf-2-0s-viewscope-to-spring-3-0/)
+{% gist 2837458 %}
+
+## Run example
+
+Run it and follow this link: [http://localhost:8080/jsf2-spring-example/index.jsf](http://localhost:8080/jsf2-spring-example/index.jsf) It's works! :)
+[{% img /downloads/192/test1.png 500 180 'Example #1' %}](/downloads/192/test1.png)
+[{% img /downloads/192/test2.png 500 180 'Example #2' %}](/downloads/192/test2.png)
+
+P.S. Full project you can be downloaded from [my github repository](https://github.com/eburtsev/jsf2-spring-example)

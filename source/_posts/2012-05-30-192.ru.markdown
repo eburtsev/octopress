@@ -1,0 +1,43 @@
+---
+layout: post
+title: "Пример совместной работы JSF2 и Spring Framework"
+date: 2012-05-30 21:19
+comments: true
+categories: [java, jsf, jsf-2.0, spring]
+---
+
+Совсем недавно открыл для себя Spring Framework и понял, что до этого момента упускал множество возможностей. По это причине решил переписать парочку приложений с использованием Spring. Ниже я расскажу как интегрировать Spring и JSF2
+<!--more-->
+
+## Подключение зависимостей
+
+В первую очередь необходимо добавить в зависимости проекта артефакт org.springframework:spring-web:
+{% gist 2837401 %}
+Остальные необходимые зависимости maven подтянет сам.
+
+## Настройка
+
+Чтобы все заработало нужно настроить слушателей в web.xml, как показано в примере ниже: {% gist 2837439 %}
+
+Так же необходимо установить el-resolver из Spring взамен стандартного, чтобы дать возможность спрингу рулить бинами. Для этого меняем faces-config.xml: {% gist 2837426 %}
+
+Теперь настроим spring-context.xml. Собственно тут все сводится к изменению значения base-package для context:component-scan: {% gist 2837471 %}
+
+## Код
+
+Ну а теперь после того как все необходимые настройки сделаны - попробуем написать код:
+### index.xhtml
+{% gist 2837452 %}
+
+### TestBean.java
+
+Здесь нужно отметить использование аннотации @Controller вместо @ManagedBean и @Scope для указания времени жизни бина. Список всех возможных scope можно посмотреть тут: [Spring Framework Reference](http://static.springsource.org/spring/docs/3.1.x/spring-framework-reference/html/beans.html#beans-factory-scopes). Так же стоит отметить отсутствие view scope по дефолту. Но эту проблему можно обойти, например, как описано в [этой статье](http://comdynamics.net/blog/109/spring3-jsf2-view-scope/) или [в этой](http://cagataycivici.wordpress.com/2010/02/17/port-jsf-2-0s-viewscope-to-spring-3-0/)
+{% gist 2837458 %}
+
+## Пример работы
+
+Запускаем, переходим по адресу: [http://localhost:8080/jsf2-spring-example/index.jsf](http://localhost:8080/jsf2-spring-example/index.jsf) и видим что все работает :)
+[{% img /downloads/192/test1.png 500 180 'Example #1' %}](/downloads/192/test1.png)
+[{% img /downloads/192/test2.png 500 180 'Example #2' %}](/downloads/192/test2.png)
+
+P.S. Полный проект можно взять здесь: [github repository](https://github.com/eburtsev/jsf2-spring-example)
