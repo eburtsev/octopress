@@ -1,43 +1,175 @@
 ---
 layout: post
-title: "Пример совместной работы JSF2 и Spring Framework"
+title: "РџСЂРёРјРµСЂ СЃРѕРІРјРµСЃС‚РЅРѕР№ СЂР°Р±РѕС‚С‹ JSF2 Рё Spring Framework"
 date: 2012-05-30 21:19
 comments: true
 categories: [java, jsf, jsf-2.0, spring]
 ---
 
-Совсем недавно открыл для себя Spring Framework и понял, что до этого момента упускал множество возможностей. По это причине решил переписать парочку приложений с использованием Spring. Ниже я расскажу как интегрировать Spring и JSF2
+РЎРѕРІСЃРµРј РЅРµРґР°РІРЅРѕ РѕС‚РєСЂС‹Р» РґР»СЏ СЃРµР±СЏ Spring Framework Рё РїРѕРЅСЏР», С‡С‚Рѕ РґРѕ СЌС‚РѕРіРѕ РјРѕРјРµРЅС‚Р° СѓРїСѓСЃРєР°Р» РјРЅРѕР¶РµСЃС‚РІРѕ РІРѕР·РјРѕР¶РЅРѕСЃС‚РµР№. РџРѕ СЌС‚Рѕ РїСЂРёС‡РёРЅРµ СЂРµС€РёР» РїРµСЂРµРїРёСЃР°С‚СЊ РїР°СЂРѕС‡РєСѓ РїСЂРёР»РѕР¶РµРЅРёР№ СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј Spring. РќРёР¶Рµ СЏ СЂР°СЃСЃРєР°Р¶Сѓ РєР°Рє РёРЅС‚РµРіСЂРёСЂРѕРІР°С‚СЊ Spring Рё JSF2
 <!--more-->
 
-## Подключение зависимостей
+## РџРѕРґРєР»СЋС‡РµРЅРёРµ Р·Р°РІРёСЃРёРјРѕСЃС‚РµР№
 
-В первую очередь необходимо добавить в зависимости проекта артефакт org.springframework:spring-web:
-{% gist 2837401 %}
-Остальные необходимые зависимости maven подтянет сам.
+Р’ РїРµСЂРІСѓСЋ РѕС‡РµСЂРµРґСЊ РЅРµРѕР±С…РѕРґРёРјРѕ РґРѕР±Р°РІРёС‚СЊ РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РїСЂРѕРµРєС‚Р° Р°СЂС‚РµС„Р°РєС‚ org.springframework:spring-web:
+``` xml pom.xml
+<dependency>
+	<groupId>org.springframework</groupId>
+	<artifactId>spring-web</artifactId>
+	<version>3.1.1.RELEASE</version>
+</dependency>
+```
 
-## Настройка
+РћСЃС‚Р°Р»СЊРЅС‹Рµ РЅРµРѕР±С…РѕРґРёРјС‹Рµ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё maven РїРѕРґС‚СЏРЅРµС‚ СЃР°Рј.
 
-Чтобы все заработало нужно настроить слушателей в web.xml, как показано в примере ниже: {% gist 2837439 %}
+## РќР°СЃС‚СЂРѕР№РєР°
 
-Так же необходимо установить el-resolver из Spring взамен стандартного, чтобы дать возможность спрингу рулить бинами. Для этого меняем faces-config.xml: {% gist 2837426 %}
+Р§С‚РѕР±С‹ РІСЃРµ Р·Р°СЂР°Р±РѕС‚Р°Р»Рѕ РЅСѓР¶РЅРѕ РЅР°СЃС‚СЂРѕРёС‚СЊ СЃР»СѓС€Р°С‚РµР»РµР№ РІ web.xml, РєР°Рє РїРѕРєР°Р·Р°РЅРѕ РІ РїСЂРёРјРµСЂРµ РЅРёР¶Рµ: 
+``` xml web.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+		xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+		id="jsf2-spring-example" version="2.5">
+ 
+	<display-name>jsf2-spring-example Application</display-name>
+ 
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+ 
+	<listener>
+		<listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+	</listener>
+ 
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:spring-context.xml</param-value>
+	</context-param>
+ 
+	<servlet>
+		<servlet-name>Faces Servlet</servlet-name>
+		<servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+ 
+	<servlet-mapping>
+		<servlet-name>Faces Servlet</servlet-name>
+		<url-pattern>*.jsf</url-pattern>
+	</servlet-mapping>
+ 
+	<servlet-mapping>
+		<servlet-name>Faces Servlet</servlet-name>
+		<url-pattern>/faces/*</url-pattern>
+	</servlet-mapping>
+ 
+</web-app>
+```
 
-Теперь настроим spring-context.xml. Собственно тут все сводится к изменению значения base-package для context:component-scan: {% gist 2837471 %}
+РўР°Рє Р¶Рµ РЅРµРѕР±С…РѕРґРёРјРѕ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ el-resolver РёР· Spring РІР·Р°РјРµРЅ СЃС‚Р°РЅРґР°СЂС‚РЅРѕРіРѕ, С‡С‚РѕР±С‹ РґР°С‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ СЃРїСЂРёРЅРіСѓ СЂСѓР»РёС‚СЊ Р±РёРЅР°РјРё. Р”Р»СЏ СЌС‚РѕРіРѕ РјРµРЅСЏРµРј faces-config.xml:
+``` xml faces-config.xml
+<?xml version="1.0"?>
+<faces-config version="2.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_2_0.xsd">
 
-## Код
+	<application>
+		<el-resolver>org.springframework.web.jsf.el.SpringBeanFacesELResolver</el-resolver>
+	</application>
 
-Ну а теперь после того как все необходимые настройки сделаны - попробуем написать код:
+</faces-config>
+```
+
+РўРµРїРµСЂСЊ РЅР°СЃС‚СЂРѕРёРј spring-context.xml. РЎРѕР±СЃС‚РІРµРЅРЅРѕ С‚СѓС‚ РІСЃРµ СЃРІРѕРґРёС‚СЃСЏ Рє РёР·РјРµРЅРµРЅРёСЋ Р·РЅР°С‡РµРЅРёСЏ base-package РґР»СЏ context:component-scan:
+``` xml spring-context.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+	  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+	  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+
+	<!-- enable component scanning -->
+	<context:component-scan base-package="net.burtsev.example" />
+
+	<!-- enable autowire -->
+	<context:annotation-config />
+
+</beans>
+```
+
+## РљРѕРґ
+
+РќСѓ Р° С‚РµРїРµСЂСЊ РїРѕСЃР»Рµ С‚РѕРіРѕ РєР°Рє РІСЃРµ РЅРµРѕР±С…РѕРґРёРјС‹Рµ РЅР°СЃС‚СЂРѕР№РєРё СЃРґРµР»Р°РЅС‹ - РїРѕРїСЂРѕР±СѓРµРј РЅР°РїРёСЃР°С‚СЊ РєРѕРґ:
 ### index.xhtml
-{% gist 2837452 %}
+``` xml index.xhtml
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets" template="/templates/main.xhtml">
+
+	<ui:define name="title">Home</ui:define>
+
+	<ui:define name="body">
+		<h:form prependId="false">
+			<h:inputText value="#{testBean.name}" />
+			<h:commandButton action="#{testBean.sayHelloAction}" value="Say Hello"/>
+			<br/>
+			#{testBean.hello}
+		</h:form>
+	</ui:define>
+
+</ui:composition>
+```
 
 ### TestBean.java
 
-Здесь нужно отметить использование аннотации @Controller вместо @ManagedBean и @Scope для указания времени жизни бина. Список всех возможных scope можно посмотреть тут: [Spring Framework Reference](http://static.springsource.org/spring/docs/3.1.x/spring-framework-reference/html/beans.html#beans-factory-scopes). Так же стоит отметить отсутствие view scope по дефолту. Но эту проблему можно обойти, например, как описано в [этой статье](http://comdynamics.net/blog/109/spring3-jsf2-view-scope/) или [в этой](http://cagataycivici.wordpress.com/2010/02/17/port-jsf-2-0s-viewscope-to-spring-3-0/)
-{% gist 2837458 %}
+Р—РґРµСЃСЊ РЅСѓР¶РЅРѕ РѕС‚РјРµС‚РёС‚СЊ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ Р°РЅРЅРѕС‚Р°С†РёРё @Controller РІРјРµСЃС‚Рѕ @ManagedBean Рё @Scope РґР»СЏ СѓРєР°Р·Р°РЅРёСЏ РІСЂРµРјРµРЅРё Р¶РёР·РЅРё Р±РёРЅР°. РЎРїРёСЃРѕРє РІСЃРµС… РІРѕР·РјРѕР¶РЅС‹С… scope РјРѕР¶РЅРѕ РїРѕСЃРјРѕС‚СЂРµС‚СЊ С‚СѓС‚: [Spring Framework Reference](http://static.springsource.org/spring/docs/3.1.x/spring-framework-reference/html/beans.html#beans-factory-scopes). РўР°Рє Р¶Рµ СЃС‚РѕРёС‚ РѕС‚РјРµС‚РёС‚СЊ РѕС‚СЃСѓС‚СЃС‚РІРёРµ view scope РїРѕ РґРµС„РѕР»С‚Сѓ. РќРѕ СЌС‚Сѓ РїСЂРѕР±Р»РµРјСѓ РјРѕР¶РЅРѕ РѕР±РѕР№С‚Рё, РЅР°РїСЂРёРјРµСЂ, РєР°Рє РѕРїРёСЃР°РЅРѕ РІ [СЌС‚РѕР№ СЃС‚Р°С‚СЊРµ](http://comdynamics.net/blog/109/spring3-jsf2-view-scope/) РёР»Рё [РІ СЌС‚РѕР№](http://cagataycivici.wordpress.com/2010/02/17/port-jsf-2-0s-viewscope-to-spring-3-0/)
+``` java TestBean.java
+package net.burtsev.example.web;
 
-## Пример работы
+import java.io.Serializable;
 
-Запускаем, переходим по адресу: [http://localhost:8080/jsf2-spring-example/index.jsf](http://localhost:8080/jsf2-spring-example/index.jsf) и видим что все работает :)
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Controller;
+
+@Controller
+@Scope("session")
+public class TestBean implements Serializable {
+
+	private static final long serialVersionUID = -1;
+
+	private String name;
+	private String hello;
+
+	public void sayHelloAction() {
+		hello = StringUtils.isNotBlank(name) ? "Hello " + name : "";
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getHello() {
+		return hello;
+	}
+
+	public void setHello(String hello) {
+		this.hello = hello;
+	}
+}
+```
+
+## РџСЂРёРјРµСЂ СЂР°Р±РѕС‚С‹
+
+Р—Р°РїСѓСЃРєР°РµРј, РїРµСЂРµС…РѕРґРёРј РїРѕ Р°РґСЂРµСЃСѓ:В [http://localhost:8080/jsf2-spring-example/index.jsf](http://localhost:8080/jsf2-spring-example/index.jsf) Рё РІРёРґРёРј С‡С‚Рѕ РІСЃРµ СЂР°Р±РѕС‚Р°РµС‚ :)
+
 [{% img /downloads/192/test1.png 500 180 'Example #1' %}](/downloads/192/test1.png)
 [{% img /downloads/192/test2.png 500 180 'Example #2' %}](/downloads/192/test2.png)
 
-P.S. Полный проект можно взять здесь: [github repository](https://github.com/eburtsev/jsf2-spring-example)
+P.S. РџРѕР»РЅС‹Р№ РїСЂРѕРµРєС‚ РјРѕР¶РЅРѕ РІР·СЏС‚СЊ Р·РґРµСЃСЊ:В [github repository](https://github.com/eburtsev/jsf2-spring-example)

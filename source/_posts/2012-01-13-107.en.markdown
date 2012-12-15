@@ -7,19 +7,277 @@ categories: [ibatis, java, java7]
 ---
 With Java 7 came analog of using construction from C# - [try-with-resources](http://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html). This feature is very well for automatically close resources such as database connections, etc.
 For example:
-{% gist 1638790 %}
+``` java
+try (SqlSession session = ConnectionFactory.getSqlSessionFactory().openSession()) {
+	// Work with session
+	session.commit();
+}
+```
 
 But there are an trouble - class org.apache.ibatis.session.SqlSession from MyBatis 3.0.6 does not implement AutoCloseable interface which is required to work try-with-resources construction. I hope that in next version it will be fixed, but now I can offer small workaround.
 <!--more-->
 
 The first implement a wrapper for SqlSession class implements the interface AutoCloseable:
-{% gist 1638811 %}
+``` java SqlSession.java
+package net.burtsev.example.dao.mybatis.session;
+ 
+import java.io.Closeable;
+import java.sql.Connection;
+import java.util.List;
+import java.util.Map;
+ 
+import org.apache.ibatis.executor.BatchResult;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.ResultHandler;
+import org.apache.ibatis.session.RowBounds;
+ 
+@SuppressWarnings("rawtypes")
+public class SqlSession implements org.apache.ibatis.session.SqlSession, Closeable {
+ 
+	private org.apache.ibatis.session.SqlSession wrappedSession;
+ 
+	SqlSession(org.apache.ibatis.session.SqlSession wrappedSession) {
+		this.wrappedSession = wrappedSession;
+	}
+ 
+	@Override
+	public Object selectOne(String statement) {
+		return wrappedSession.selectOne(statement);
+	}
+ 
+	@Override
+	public Object selectOne(String statement, Object parameter) {
+		return wrappedSession.selectOne(statement, parameter);
+	}
+ 
+	@Override
+	public List selectList(String statement) {
+		return wrappedSession.selectList(statement);
+	}
+ 
+	@Override
+	public List selectList(String statement, Object parameter) {
+		return wrappedSession.selectList(statement, parameter);
+	}
+ 
+	@Override
+	public List selectList(String statement, Object parameter, RowBounds rowBounds) {
+		return wrappedSession.selectList(statement, parameter, rowBounds);
+	}
+ 
+	@Override
+	public Map selectMap(String statement, String mapKey) {
+		return wrappedSession.selectMap(statement, mapKey);
+	}
+ 
+	@Override
+	public Map selectMap(String statement, Object parameter, String mapKey) {
+		return wrappedSession.selectMap(statement, parameter, mapKey);
+	}
+ 
+	@Override
+	public Map selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
+		return wrappedSession.selectMap(statement, parameter, mapKey, rowBounds);
+	}
+ 
+	@Override
+	public void select(String statement, Object parameter, ResultHandler handler) {
+		wrappedSession.select(statement, parameter, handler);
+	}
+ 
+	@Override
+	public void select(String statement, ResultHandler handler) {
+		wrappedSession.select(statement, handler);
+	}
+ 
+	@Override
+	public void select(String statement, Object parameter, RowBounds rowBounds, ResultHandler handler) {
+		wrappedSession.select(statement, parameter, rowBounds, handler);
+	}
+ 
+	@Override
+	public int insert(String statement) {
+		return wrappedSession.insert(statement);
+	}
+ 
+	@Override
+	public int insert(String statement, Object parameter) {
+		return wrappedSession.insert(statement, parameter);
+	}
+ 
+	@Override
+	public int update(String statement) {
+		return wrappedSession.update(statement);
+	}
+ 
+	@Override
+	public int update(String statement, Object parameter) {
+		return wrappedSession.update(statement, parameter);
+	}
+ 
+	@Override
+	public int delete(String statement) {
+		return wrappedSession.delete(statement);
+	}
+ 
+	@Override
+	public int delete(String statement, Object parameter) {
+		return wrappedSession.delete(statement, parameter);
+	}
+ 
+	@Override
+	public void commit() {
+		wrappedSession.commit();
+	}
+ 
+	@Override
+	public void commit(boolean force) {
+		wrappedSession.commit(force);
+	}
+ 
+	@Override
+	public void rollback() {
+		wrappedSession.rollback();
+	}
+ 
+	@Override
+	public void rollback(boolean force) {
+		wrappedSession.rollback(force);
+	}
+ 
+	@Override
+	public List<BatchResult> flushStatements() {
+		return wrappedSession.flushStatements();
+	}
+ 
+	@Override
+	public void close() {
+		wrappedSession.close();
+	}
+ 
+	@Override
+	public void clearCache() {
+		wrappedSession.clearCache();
+	}
+ 
+	@Override
+	public Configuration getConfiguration() {
+		return wrappedSession.getConfiguration();
+	}
+ 
+	@Override
+	public <T> T getMapper(Class<T> type) {
+		return wrappedSession.getMapper(type);
+	}
+ 
+	@Override
+	public Connection getConnection() {
+		return wrappedSession.getConnection();
+	}
+ 
+}
+```
 
 Also we need write wrapper for SqlSessionFactory class which can work with our custom SqlSession:
-{% gist 1638826 %}
+``` java SqlSessionFactory.java
+package net.burtsev.example.dao.mybatis.session;
+ 
+import java.sql.Connection;
+ 
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.TransactionIsolationLevel;
+ 
+public class SqlSessionFactory implements org.apache.ibatis.session.SqlSessionFactory {
+ 
+	private org.apache.ibatis.session.SqlSessionFactory wrappedFactory;
+ 
+	SqlSessionFactory(org.apache.ibatis.session.SqlSessionFactory wrappedFactory) {
+		this.wrappedFactory = wrappedFactory;
+	}
+ 
+	@Override
+	public SqlSession openSession() {
+		return new SqlSession(wrappedFactory.openSession());
+	}
+ 
+	@Override
+	public SqlSession openSession(boolean autoCommit) {
+		return new SqlSession(wrappedFactory.openSession(autoCommit));
+	}
+ 
+	@Override
+	public SqlSession openSession(Connection connection) {
+		return new SqlSession(wrappedFactory.openSession(connection));
+	}
+ 
+	@Override
+	public SqlSession openSession(TransactionIsolationLevel level) {
+		return new SqlSession(wrappedFactory.openSession(level));
+	}
+ 
+	@Override
+	public SqlSession openSession(ExecutorType execType) {
+		return new SqlSession(wrappedFactory.openSession(execType));
+	}
+ 
+	@Override
+	public SqlSession openSession(ExecutorType execType, boolean autoCommit) {
+		return new SqlSession(wrappedFactory.openSession(execType, autoCommit));
+	}
+ 
+	@Override
+	public SqlSession openSession(ExecutorType execType, TransactionIsolationLevel level) {
+		return new SqlSession(wrappedFactory.openSession(execType, level));
+	}
+ 
+	@Override
+	public SqlSession openSession(ExecutorType execType, Connection connection) {
+		return new SqlSession(wrappedFactory.openSession(execType, connection));
+	}
+ 
+	@Override
+	public Configuration getConfiguration() {
+		return wrappedFactory.getConfiguration();
+	}
+ 
+}
+```
 
 Below I provide iBatis initialization code. It looks as usual, except the line 18, where we initialize our wrapper.
-{% gist 1638837 %}
+``` java ConnectionFactory.java
+package net.burtsev.example.dao.mybatis.session;
+ 
+import java.io.Reader;
+ 
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+ 
+public final class ConnectionFactory {
+ 
+	private static SqlSessionFactory sqlSessionFactory;
+	private static Reader reader;
+ 
+	static {
+		try {
+			reader = Resources.getResourceAsReader("mybatis-config.xml");
+ 
+			if (sqlSessionFactory == null) {
+				sqlSessionFactory = new SqlSessionFactory(new SqlSessionFactoryBuilder().build(reader, Settings.getInstance()));
+				sqlSessionFactory.getConfiguration().addMappers("net.burtsev.example.dao.mybatis.mappers");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+ 
+	private ConnectionFactory() { }
+ 
+	public static SqlSessionFactory getSqlSessionFactory() {
+		return sqlSessionFactory;
+	}
+}
+```
 
 That's all - now we can now enjoy java7 features in our project:)
 
